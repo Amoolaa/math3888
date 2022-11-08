@@ -1,17 +1,12 @@
 import pandas as pd
 from math import comb
 
+# Helper methods
+
 def connectivity_significance(ks, k, N, s0):
   return comb(s0, ks) * comb(N-s0, k-ks) * 1/comb(N, k)
 
 def pvalue(ks, k, N, s0):
-    """
-    -------------------------------------------------------------------
-    Computes the p-value for a node that has kb out of k links to
-    seeds, given that there's a total of s seeds in a network of N nodes.
-    p-val = \sum_{n=kb}^{k} HypergemetricPDF(n,k,N,s)
-    -------------------------------------------------------------------
-    """
     p = 0.0
     for ki in range(ks, k + 1):
         if ki > s0:
@@ -42,19 +37,20 @@ def p_dict(GC, seeds):
   return p
 
 # Helper to get disease proteins from data file with strange format quickly
-def get_disease_proteins(f, disease_no):
-  f = open("data/id_symbol.txt", "r")
-  id_to_symbol = {}
-  for line in f.readlines():
-    id, symbol = line.split(" ")
-    id_to_symbol[id] = symbol.strip()
-  f.close()
+def get_disease_proteins(disease_name):
+  f = open("data/diseases/" + disease_name + ".txt", "r")
+  proteins = f.read().split('\n')
+  return proteins
 
-  disease_protein_df = pd.read_csv("data/disease_protein.csv", sep=":")
+def get_seed_degree(G, seeds):
+  k = {}
 
-  disease_proteins = []
-
-  for id in disease_protein_df.iloc[disease_no]["proteins"].split("/"):
-    disease_proteins.append(id_to_symbol[id])
-
-  return disease_proteins
+  for node in G.nodes():
+    # Find number of links to seeds
+    ks = 0
+    for neighbour in G.neighbors(node):
+      if neighbour in seeds:
+        ks += 1
+    k[node] = ks/G.degree(node)
+  
+  return k
